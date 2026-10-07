@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Лабораторна робота №3 </title>
+<style>
+  body{font-family:Georgia,serif;max-width:760px;margin:24px auto;padding:0 16px;line-height:1.5;color:#222}
+  h1{font-size:1.5rem} h2{font-size:1.1rem;}
+  button{display:block;width:100%;max-width:320px;text-align:left;font:inherit;margin:6px 0;padding:8px 12px;cursor:pointer}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  #log{background:#f4f4f4;border:1px solid #ccc;padding:10px;min-height:80px;white-space:pre-wrap;font-family:monospace}
+  #out{font-size:1.6rem;margin:8px 0}
+</style>
+</head>
+<body>
+
+<button onclick="task1()">Ім'я та вік</button>
+<button onclick="task2()">Оцінка студента</button>
+<button onclick="task3()">Чайові</button>
+
+<button onclick="task4()">Таймер</button>
+<button onclick="task5()">Калькулятор</button>
+<button onclick="task6()">Лічильник</button>
+<button id="counterBtn" onclick="clickCounter && clickCounter()">Клік лічильника</button>
+
+<p><button onclick="task7()">Випадкові числа</button>
+<button id="next" disabled>Next number</button></p>
+<div id="out"></div>
+<button onclick="task8()">Генератор паролів</button>
+<button onclick="task9()">Чат-бот</button>
+<p><button onclick="task10()">Контекст this: задати ім'я</button>
+<button id="hello" disabled>Say</button>
+<button id="helloBroken" disabled>Say (без bind)</button></p>
+
+<h2>Журнал</h2>
+<div id="log"></div>
+
+<script>
+
+function log(text) {
+  console.log(text);
+  document.getElementById('log').textContent += text + '\n';
+}
+
+function askName(message) {
+  while (true) {
+    const value = prompt(message);
+    if (value === null) return null;
+    const text = value.trim();
+    if (/^[A-Za-zА-Яа-яІіЇїЄєҐґ'’\- ]{2,30}$/.test(text)) return text;
+    alert('Помилка: введіть лише літери (від 2 до 30 символів).');
+  }
+}
+
+function askNumber(message, min, max, integer = false) {
+  while (true) {
+    const value = prompt(message);
+    if (value === null) return null;
+    const text = value.trim().replace(',', '.');
+    const num = Number(text);
+    const ok = text !== '' && Number.isFinite(num) && num >= min && num <= max &&
+               (!integer || Number.isInteger(num));
+    if (ok) return num;
+    alert(`Помилка: введіть ${integer ? 'ціле ' : ''}число від ${min} до ${max}.`);
+  }
+}
+
+function askText(message, maxLen = 100) {
+  while (true) {
+    const value = prompt(message);
+    if (value === null) return null;
+    const text = value.trim();
+    if (text.length > 0 && text.length <= maxLen) return text;
+    alert(`Помилка: введіть текст (1–${maxLen} символів).`);
+  }
+}
+
+
+
+// 1) Ім'я, прізвище, вік
+function getFullName(firstName, lastName) {
+  return `${firstName} ${lastName}`;
+}
+function showGreeting(fullName, age) {
+  const message = `Hello, ${fullName}! You are ${age} years old.`;
+  log(message);
+  alert(message);
+}
+function task1() {
+  const firstName = askName("Введіть ім'я:");
+  if (firstName === null) return;
+  const lastName = askName('Введіть прізвище:');
+  if (lastName === null) return;
+  const age = askNumber('Введіть вік (1–120):', 1, 120, true);
+  if (age === null) return;
+  showGreeting(getFullName(firstName, lastName), age);
+}
+
+// 2) Оцінка студента
+function getStudentInfo() {
+  const name = askName("Введіть ім'я студента:");
+  if (name === null) return null;
+  const score = askNumber('Введіть бал (0–12):', 0, 12, true);
+  if (score === null) return null;
+  return { name, score };
+}
+function checkGrade(score) {
+  if (score >= 10) return 'Excellent';
+  if (score >= 7) return 'Good';
+  if (score >= 4) return 'Satisfactory';
+  return 'Fail';
+}
+function showResult(name, grade) {
+  const message = `Student: ${name}\nGrade: ${grade}`;
+  log(message);
+  alert(message);
+}
+function task2() {
+  const info = getStudentInfo();
+  if (info === null) return;
+  showResult(info.name, checkGrade(info.score));
+}
+
+// 3) Чайові
+function calculateTip(amount, percent = 10) {
+  return amount * percent / 100;
+}
+function showTipResult(amount, tip, percent = 10) {
+  const message = `Bill: ${amount} грн\nTip (${percent}%): ${tip} грн\nTotal: ${amount + tip} грн`;
+  log(message);
+  alert(message);
+}
+function task3() {
+  const amount = askNumber('Введіть суму рахунку, грн (більше 0):', 0.01, 1000000);
+  if (amount === null) return;
+  showTipResult(amount, calculateTip(amount)); // відсоток за замовчуванням — 10%
+}
+
+
+
+// 4) Таймер з колбеком (стрілкова функція)
+function startGreetingTimer(message, seconds, callback) {
+  setTimeout(() => {
+    log(message);
+    callback();
+  }, seconds * 1000);
+}
+function task4() {
+  const message = askText('Введіть повідомлення:');
+  if (message === null) return;
+  const seconds = askNumber('Через скільки секунд показати (1–60)?', 1, 60, true);
+  if (seconds === null) return;
+  log(`Таймер запущено на ${seconds} с...`);
+  startGreetingTimer(message, seconds, () => alert('Time is up!'));
+}
+
+// 5) Калькулятор
+function calculate(a, b, operation) {
+  switch (operation) {
+    case '+': return a + b;
+    case '-': return a - b;
+    case '*': return a * b;
+    case '/': return b === 0 ? 'Division by zero' : a / b;
+    default: return 'Invalid operation';
+  }
+}
+function showCalcResult() {
+  const a = askNumber('Введіть перше число:', -1e12, 1e12);
+  if (a === null) return;
+  const b = askNumber('Введіть друге число:', -1e12, 1e12);
+  if (b === null) return;
+  let operation;
+  while (true) {
+    operation = prompt('Введіть операцію: + - * /');
+    if (operation === null) return;
+    operation = operation.trim();
+    if (['+', '-', '*', '/'].includes(operation)) break;
+    alert('Помилка: допустимі операції лише + - * /');
+  }
+  const result = calculate(a, b, operation);
+  log(`${a} ${operation} ${b} = ${result}`);
+  alert(`Результат: ${result}`);
+}
+function task5() { showCalcResult(); }
+
+// 6) Лічильник (замикання)
+let clickCounter = null;
+function createClickCounter() {
+  let count = 0;
+  return function () {
+    count++;
+    log(`Count: ${count}`);
+  };
+}
+function task6() {
+  clickCounter = createClickCounter();
+  log('Лічильник створено. Натискайте «Клік лічильника» (значення запам\'ятовується).');
+  clickCounter(); clickCounter(); // демонстрація
+}
+
+
+// 7) Генератор випадкових чисел
+function* randomGenerator(min, max) {
+  while (true) {
+    yield Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+}
+function task7() {
+  const min = askNumber('Мінімальна межа (ціле число):', -1000000, 1000000, true);
+  if (min === null) return;
+  const max = askNumber(`Максимальна межа (ціле число, більше ${min}):`, min + 1, 1000000, true);
+  if (max === null) return;
+  const gen = randomGenerator(min, max);
+  const btn = document.getElementById('next');
+  btn.disabled = false;
+  btn.onclick = () => {
+    document.getElementById('out').textContent = gen.next().value;
+  };
+  log(`Генератор створено: числа від ${min} до ${max}.`);
+}
+
+// 8) Генератор паролів
+function* passwordGenerator() {
+  let password = '';
+  while (true) {
+    const symbol = yield password;
+    if (symbol === 'done') return password;
+    password += symbol;
+  }
+}
+function task8() {
+  const MIN_LEN = 6;
+  const gen = passwordGenerator();
+  gen.next(); 
+  let length = 0;
+  while (true) {
+    const input = prompt(`Введіть один символ (літера, цифра або !@#$%&*_-) або 'done'.\nПоточна довжина: ${length}`);
+    if (input === null) { log('Скасовано.'); return; }
+    const value = input.trim();
+    if (value === 'done') {
+      if (length < MIN_LEN) {
+        alert(`Пароль закороткий: потрібно мінімум ${MIN_LEN} символів.`);
+        continue;
+      }
+      const result = gen.next('done');
+      log(`Пароль: ${result.value}`);
+      alert(`Ваш пароль: ${result.value}`);
+      return;
+    }
+    if (!/^[A-Za-z0-9!@#$%&*_\-]$/.test(value)) {
+      alert("Помилка: введіть рівно один допустимий символ або 'done'.");
+      continue;
+    }
+    gen.next(value);
+    length++;
+  }
+}
+
+// 9) Генератор діалогів
+function* chatBot() {
+  const name = yield 'Hi! What is your name?';
+  const mood = yield `Nice to meet you, ${name}! How are you?`;
+  yield `Goodbye, ${name}! Glad you are ${mood}.`;
+}
+function task9() {
+  const bot = chatBot();
+  const q1 = bot.next().value;
+  const name = askName(q1);
+  if (name === null) return;
+  log(`Bot: ${q1}\nYou: ${name}`);
+  const q2 = bot.next(name).value;
+  const mood = askName(q2); 
+  if (mood === null) return;
+  log(`Bot: ${q2}\nYou: ${mood}`);
+  const bye = bot.next(mood).value;
+  log(`Bot: ${bye}`);
+  alert(bye);
+}
+
+// 10 Втрата контексту методом
+function task10() {
+  const name = askName("Введіть ім'я:");
+  if (name === null) return;
+
+  const user = {
+    name: name,
+    say() { alert(`Hello, ${this.name}`); }
+  };
+
+  const broken = document.getElementById('helloBroken');
+  broken.disabled = false;
+  broken.onclick = user.say;
+
+  const hello = document.getElementById('hello');
+  hello.disabled = false;
+  hello.onclick = user.say.bind(user);
+
+  log('Кнопка «Say (без bind)» втрачає this → "Hello, ". Кнопка «Say» працює правильно.');
+}
+</script>
+</body>
+</html>
